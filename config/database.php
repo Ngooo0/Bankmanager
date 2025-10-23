@@ -83,6 +83,36 @@ return [
             ]) : [],
         ],
 
+        // Base de données locale PostgreSQL
+        'local' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_LOCAL_HOST', '127.0.0.1'),
+            'port' => env('DB_LOCAL_PORT', '5432'),
+            'database' => env('DB_LOCAL_DATABASE', 'bankmanager'),
+            'username' => env('DB_LOCAL_USERNAME', 'postgres'),
+            'password' => env('DB_LOCAL_PASSWORD', 'NGO'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
+        // Base de données en ligne (Neon)
+        'online' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_ONLINE_HOST', 'ep-aged-silence-adiir5jo-pooler.c-2.us-east-1.aws.neon.tech'),
+            'port' => env('DB_ONLINE_PORT', '5432'),
+            'database' => env('DB_ONLINE_DATABASE', 'neondb'),
+            'username' => env('DB_ONLINE_USERNAME', 'neondb_owner'),
+            'password' => env('DB_ONLINE_PASSWORD', 'npg_HAMLp3U7SYTF'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),

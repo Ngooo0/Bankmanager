@@ -1,0 +1,1665 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "BankManager API",
+        "description": "API de gestion bancaire pour BankManager",
+        "contact": {
+            "email": "contact@bankmanager.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Serveur de développement"
+        }
+    ],
+    "paths": {
+        "/api/clients": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Lister tous les clients",
+                "description": "Récupère la liste paginée de tous les clients",
+                "operationId": "413c12320d4121431e38339f45ecaa7c",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de la page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Terme de recherche",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des clients récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Client"
+                                            }
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-clients"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Créer un nouveau client",
+                "description": "Crée un nouveau client dans le système",
+                "operationId": "f909473745c1a1d469e0c5a5b54682b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreClientRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Client"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-clients"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/clients/{id}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Afficher un client",
+                "description": "Récupère les détails d'un client spécifique",
+                "operationId": "feff36e8c89b21277ad216c29ca9ca4b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Client"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-clients"
+                        ]
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Mettre à jour un client",
+                "description": "Met à jour les informations d'un client existant",
+                "operationId": "4cdaf0a748c704e6f11a98f7bb6eb5a4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateClientRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Client"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-clients"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Supprimer un client",
+                "description": "Supprime un client du système (soft delete)",
+                "operationId": "5b6d3bdaf49885db3b7b4b23aed2156b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du client",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Client supprimé avec succès"
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-clients"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/comptes": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Lister tous les comptes",
+                "description": "Récupère la liste paginée de tous les comptes bancaires",
+                "operationId": "2751c57512eeb88bdfc1b23232202bd4",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de la page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "description": "Filtrer par client UUID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de compte",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "epargne",
+                                "cheque"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "actif",
+                                "bloque",
+                                "ferme"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Compte"
+                                            }
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-comptes"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Créer un nouveau compte",
+                "description": "Crée un nouveau compte bancaire pour un client existant",
+                "operationId": "86ebad3737ad4fc8e19637ac3b02a34c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_id",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "client_id": {
+                                        "description": "UUID du client",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "type": {
+                                        "description": "Type de compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "epargne",
+                                            "cheque"
+                                        ]
+                                    },
+                                    "solde_initial": {
+                                        "description": "Solde initial",
+                                        "type": "number",
+                                        "format": "decimal",
+                                        "default": 0
+                                    },
+                                    "devise": {
+                                        "description": "Devise",
+                                        "type": "string",
+                                        "default": "XOF",
+                                        "maxLength": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Compte"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-comptes"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/comptes/{id}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Afficher un compte",
+                "description": "Récupère les détails d'un compte bancaire spécifique",
+                "operationId": "3c25514451451a34a95f069a81ec4d81",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Compte"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-comptes"
+                        ]
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Mettre à jour un compte",
+                "description": "Met à jour les informations d'un compte bancaire",
+                "operationId": "5a8a43ecdd5b85083835865ccb3db211",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "statut": {
+                                        "description": "Nouveau statut du compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "actif",
+                                            "bloque",
+                                            "ferme"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "description": "Notes sur le compte",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Compte"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-comptes"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Fermer un compte",
+                "description": "Ferme un compte bancaire (soft delete)",
+                "operationId": "8d0ba54e8fa37c4210d09e91a255f78e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID du compte",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Compte fermé avec succès"
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-comptes"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/transactions": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Lister toutes les transactions",
+                "description": "Récupère la liste paginée de toutes les transactions",
+                "operationId": "9b50e29e364179ebde24ac5fc59cd442",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de la page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "compte_id",
+                        "in": "query",
+                        "description": "Filtrer par compte UUID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de transaction",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "depot",
+                                "retrait",
+                                "virement_entrant",
+                                "virement_sortant",
+                                "frais",
+                                "interet"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_debut",
+                        "in": "query",
+                        "description": "Date de début (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_fin",
+                        "in": "query",
+                        "description": "Date de fin (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des transactions récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Transaction"
+                                            }
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-transactions"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Créer une nouvelle transaction",
+                "description": "Effectue une nouvelle transaction sur un compte bancaire",
+                "operationId": "54eaa3952808f639d46f969f4c8b98c5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "compte_id",
+                                    "type",
+                                    "montant"
+                                ],
+                                "properties": {
+                                    "compte_id": {
+                                        "description": "UUID du compte",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "type": {
+                                        "description": "Type de transaction",
+                                        "type": "string",
+                                        "enum": [
+                                            "depot",
+                                            "retrait",
+                                            "virement_entrant",
+                                            "virement_sortant",
+                                            "frais",
+                                            "interet"
+                                        ]
+                                    },
+                                    "montant": {
+                                        "description": "Montant de la transaction",
+                                        "type": "number",
+                                        "format": "decimal"
+                                    },
+                                    "description": {
+                                        "description": "Description de la transaction",
+                                        "type": "string"
+                                    },
+                                    "compte_destinataire": {
+                                        "description": "Numéro du compte destinataire (pour virements)",
+                                        "type": "string"
+                                    },
+                                    "nom_destinataire": {
+                                        "description": "Nom du destinataire (pour virements)",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transaction créée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides ou solde insuffisant"
+                    },
+                    "404": {
+                        "description": "Compte non trouvé"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-transactions"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/transactions/{id}": {
+            "get": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Afficher une transaction",
+                "description": "Récupère les détails d'une transaction spécifique",
+                "operationId": "45e35076645e40d84080bf253c06a689",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID de la transaction",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction non trouvée"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-transactions"
+                        ]
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Annuler une transaction",
+                "description": "Annule une transaction (si elle n'est pas déjà validée)",
+                "operationId": "43fb5702f8299f2d383e663429920d7a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID de la transaction",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction annulée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Transaction"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Transaction ne peut pas être annulée"
+                    },
+                    "404": {
+                        "description": "Transaction non trouvée"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-transactions"
+                        ]
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Supprimer une transaction",
+                "description": "Supprime une transaction (réservé aux administrateurs)",
+                "operationId": "bc63b06ba9e12cac8ef887c638602dd5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID de la transaction",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Transaction supprimée avec succès"
+                    },
+                    "404": {
+                        "description": "Transaction non trouvée"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-transactions"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Client": {
+                "title": "Client",
+                "description": "Modèle représentant un client de la banque",
+                "properties": {
+                    "id": {
+                        "description": "UUID du client",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "prenom": {
+                        "description": "Prénom du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "nom": {
+                        "description": "Nom du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "nom_complet": {
+                        "description": "Nom complet du client",
+                        "type": "string"
+                    },
+                    "email": {
+                        "description": "Email du client",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "telephone": {
+                        "description": "Téléphone du client",
+                        "type": "string",
+                        "maxLength": 20,
+                        "nullable": true
+                    },
+                    "adresse": {
+                        "description": "Adresse du client",
+                        "type": "string",
+                        "maxLength": 255,
+                        "nullable": true
+                    },
+                    "ville": {
+                        "description": "Ville du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "pays": {
+                        "description": "Pays du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "code_postal": {
+                        "description": "Code postal",
+                        "type": "string",
+                        "maxLength": 10,
+                        "nullable": true
+                    },
+                    "numero_identification": {
+                        "description": "Numéro d'identification (CIN, Passeport, etc.)",
+                        "type": "string"
+                    },
+                    "type_identification": {
+                        "description": "Type d'identification",
+                        "type": "string",
+                        "enum": [
+                            "CIN",
+                            "Passeport",
+                            "Permis de conduire"
+                        ]
+                    },
+                    "date_naissance": {
+                        "description": "Date de naissance",
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "age": {
+                        "description": "Âge du client",
+                        "type": "integer"
+                    },
+                    "sexe": {
+                        "description": "Sexe du client",
+                        "type": "string",
+                        "enum": [
+                            "M",
+                            "F",
+                            "Autre"
+                        ]
+                    },
+                    "profession": {
+                        "description": "Profession du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "employeur": {
+                        "description": "Employeur du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "revenu_mensuel": {
+                        "description": "Revenu mensuel",
+                        "type": "number",
+                        "format": "decimal",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "description": "Statut du client",
+                        "type": "string",
+                        "enum": [
+                            "Actif",
+                            "Inactif",
+                            "Suspendu",
+                            "Bloqué"
+                        ]
+                    },
+                    "notes": {
+                        "description": "Notes sur le client",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "updated_at": {
+                        "description": "Date de mise à jour",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "comptes": {
+                        "description": "Comptes du client",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Compte"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Compte": {
+                "title": "Compte",
+                "description": "Modèle représentant un compte bancaire",
+                "properties": {
+                    "id": {
+                        "description": "UUID du compte",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "numero_compte": {
+                        "description": "Numéro du compte",
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "titulaire": {
+                        "description": "Nom du titulaire",
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "type": {
+                        "description": "Type de compte",
+                        "type": "string",
+                        "enum": [
+                            "epargne",
+                            "cheque"
+                        ]
+                    },
+                    "solde": {
+                        "description": "Solde du compte",
+                        "type": "number",
+                        "format": "decimal"
+                    },
+                    "solde_formate": {
+                        "description": "Solde formaté avec devise",
+                        "type": "string"
+                    },
+                    "devise": {
+                        "description": "Devise du compte",
+                        "type": "string",
+                        "maxLength": 3
+                    },
+                    "date_creation": {
+                        "description": "Date de création du compte",
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "statut": {
+                        "description": "Statut du compte",
+                        "type": "string",
+                        "enum": [
+                            "actif",
+                            "bloque",
+                            "ferme"
+                        ]
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "updated_at": {
+                        "description": "Date de mise à jour",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "client": {
+                        "$ref": "#/components/schemas/Client"
+                    },
+                    "transactions": {
+                        "description": "Transactions du compte",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Transaction"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Transaction": {
+                "title": "Transaction",
+                "description": "Modèle représentant une transaction bancaire",
+                "properties": {
+                    "id": {
+                        "description": "UUID de la transaction",
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "type": {
+                        "description": "Type de transaction",
+                        "type": "string",
+                        "enum": [
+                            "depot",
+                            "retrait",
+                            "virement_entrant",
+                            "virement_sortant",
+                            "frais",
+                            "interet"
+                        ]
+                    },
+                    "type_libelle": {
+                        "description": "Libellé du type de transaction",
+                        "type": "string"
+                    },
+                    "montant": {
+                        "description": "Montant de la transaction",
+                        "type": "number",
+                        "format": "decimal"
+                    },
+                    "montant_formate": {
+                        "description": "Montant formaté avec devise",
+                        "type": "string"
+                    },
+                    "devise": {
+                        "description": "Devise de la transaction",
+                        "type": "string",
+                        "maxLength": 3
+                    },
+                    "description": {
+                        "description": "Description de la transaction",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "date_transaction": {
+                        "description": "Date et heure de la transaction",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "statut": {
+                        "description": "Statut de la transaction",
+                        "type": "string",
+                        "enum": [
+                            "en_attente",
+                            "validee",
+                            "annulee",
+                            "echouee"
+                        ]
+                    },
+                    "compte_destinataire": {
+                        "description": "Numéro du compte destinataire",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "nom_destinataire": {
+                        "description": "Nom du destinataire",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "frais": {
+                        "description": "Frais de transaction",
+                        "type": "number",
+                        "format": "decimal"
+                    },
+                    "solde_apres": {
+                        "description": "Solde après transaction",
+                        "type": "number",
+                        "format": "decimal"
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "updated_at": {
+                        "description": "Date de mise à jour",
+                        "type": "string",
+                        "format": "datetime"
+                    },
+                    "compte": {
+                        "$ref": "#/components/schemas/Compte"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreClientRequest": {
+                "title": "StoreClientRequest",
+                "description": "Données pour créer un nouveau client",
+                "required": [
+                    "prenom",
+                    "nom",
+                    "email",
+                    "numero_identification",
+                    "type_identification",
+                    "date_naissance",
+                    "sexe",
+                    "pays"
+                ],
+                "properties": {
+                    "prenom": {
+                        "description": "Prénom du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "nom": {
+                        "description": "Nom du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "email": {
+                        "description": "Email du client",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "telephone": {
+                        "description": "Téléphone du client",
+                        "type": "string",
+                        "maxLength": 20,
+                        "nullable": true
+                    },
+                    "adresse": {
+                        "description": "Adresse du client",
+                        "type": "string",
+                        "maxLength": 255,
+                        "nullable": true
+                    },
+                    "ville": {
+                        "description": "Ville du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "pays": {
+                        "description": "Pays du client",
+                        "type": "string",
+                        "maxLength": 100
+                    },
+                    "code_postal": {
+                        "description": "Code postal",
+                        "type": "string",
+                        "maxLength": 10,
+                        "nullable": true
+                    },
+                    "numero_identification": {
+                        "description": "Numéro d'identification",
+                        "type": "string"
+                    },
+                    "type_identification": {
+                        "description": "Type d'identification",
+                        "type": "string",
+                        "enum": [
+                            "CIN",
+                            "Passeport",
+                            "Permis de conduire"
+                        ]
+                    },
+                    "date_naissance": {
+                        "description": "Date de naissance",
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "sexe": {
+                        "description": "Sexe du client",
+                        "type": "string",
+                        "enum": [
+                            "M",
+                            "F",
+                            "Autre"
+                        ]
+                    },
+                    "profession": {
+                        "description": "Profession du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "employeur": {
+                        "description": "Employeur du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "revenu_mensuel": {
+                        "description": "Revenu mensuel",
+                        "type": "number",
+                        "format": "decimal",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Notes sur le client",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateClientRequest": {
+                "title": "UpdateClientRequest",
+                "description": "Données pour mettre à jour un client",
+                "properties": {
+                    "prenom": {
+                        "description": "Prénom du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "nom": {
+                        "description": "Nom du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "email": {
+                        "description": "Email du client",
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "telephone": {
+                        "description": "Téléphone du client",
+                        "type": "string",
+                        "maxLength": 20,
+                        "nullable": true
+                    },
+                    "adresse": {
+                        "description": "Adresse du client",
+                        "type": "string",
+                        "maxLength": 255,
+                        "nullable": true
+                    },
+                    "ville": {
+                        "description": "Ville du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "pays": {
+                        "description": "Pays du client",
+                        "type": "string",
+                        "maxLength": 100,
+                        "nullable": true
+                    },
+                    "code_postal": {
+                        "description": "Code postal",
+                        "type": "string",
+                        "maxLength": 10,
+                        "nullable": true
+                    },
+                    "numero_identification": {
+                        "description": "Numéro d'identification",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type_identification": {
+                        "description": "Type d'identification",
+                        "type": "string",
+                        "enum": [
+                            "CIN",
+                            "Passeport",
+                            "Permis de conduire"
+                        ],
+                        "nullable": true
+                    },
+                    "date_naissance": {
+                        "description": "Date de naissance",
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "sexe": {
+                        "description": "Sexe du client",
+                        "type": "string",
+                        "enum": [
+                            "M",
+                            "F",
+                            "Autre"
+                        ],
+                        "nullable": true
+                    },
+                    "profession": {
+                        "description": "Profession du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "employeur": {
+                        "description": "Employeur du client",
+                        "type": "string",
+                        "maxLength": 150,
+                        "nullable": true
+                    },
+                    "revenu_mensuel": {
+                        "description": "Revenu mensuel",
+                        "type": "number",
+                        "format": "decimal",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "description": "Statut du client",
+                        "type": "string",
+                        "enum": [
+                            "Actif",
+                            "Inactif",
+                            "Suspendu",
+                            "Bloqué"
+                        ],
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Notes sur le client",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationLinks": {
+                "title": "PaginationLinks",
+                "description": "Liens de pagination",
+                "properties": {
+                    "first": {
+                        "description": "Lien vers la première page",
+                        "type": "string"
+                    },
+                    "last": {
+                        "description": "Lien vers la dernière page",
+                        "type": "string"
+                    },
+                    "prev": {
+                        "description": "Lien vers la page précédente",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "next": {
+                        "description": "Lien vers la page suivante",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "title": "PaginationMeta",
+                "description": "Métadonnées de pagination",
+                "properties": {
+                    "current_page": {
+                        "description": "Page actuelle",
+                        "type": "integer"
+                    },
+                    "from": {
+                        "description": "Premier élément de la page",
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "description": "Dernière page",
+                        "type": "integer"
+                    },
+                    "links": {
+                        "description": "Liens de pagination",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "path": {
+                        "description": "URL de base",
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "description": "Éléments par page",
+                        "type": "integer"
+                    },
+                    "to": {
+                        "description": "Dernier élément de la page",
+                        "type": "integer"
+                    },
+                    "total": {
+                        "description": "Nombre total d'éléments",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "passport": {
+                "type": "oauth2",
+                "description": "Laravel Passport OAuth2 security.",
+                "flows": {
+                    "password": {
+                        "authorizationUrl": "http://localhost:8000/oauth/authorize",
+                        "tokenUrl": "http://localhost:8000/oauth/token",
+                        "refreshUrl": "http://localhost:8000/oauth/token/refresh",
+                        "scopes": {
+                            "read-clients": "Lire les clients",
+                            "write-clients": "Créer/modifier les clients",
+                            "read-comptes": "Lire les comptes",
+                            "write-comptes": "Créer/modifier les comptes",
+                            "read-transactions": "Lire les transactions",
+                            "write-transactions": "Créer des transactions"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Clients",
+            "description": "API Endpoints pour la gestion des clients"
+        },
+        {
+            "name": "Comptes",
+            "description": "API Endpoints pour la gestion des comptes bancaires"
+        },
+        {
+            "name": "Transactions",
+            "description": "API Endpoints pour la gestion des transactions bancaires"
+        }
+    ],
+    "security": [
+        {
+            "passport": [
+                "read-clients",
+                "write-clients",
+                "read-comptes",
+                "write-comptes",
+                "read-transactions",
+                "write-transactions"
+            ]
+        }
+    ]
+}
