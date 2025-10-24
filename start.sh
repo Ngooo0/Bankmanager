@@ -9,7 +9,12 @@ sleep 15
 
 # Générer la clé d'application si nécessaire
 echo "🔑 Génération de la clé d'application..."
-php artisan key:generate --force --no-interaction
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
+    php artisan key:generate --force --no-interaction
+    echo "✅ Clé d'application générée"
+else
+    echo "ℹ️ Clé d'application déjà définie"
+fi
 
 # Vider les caches
 echo "🧹 Nettoyage des caches..."
