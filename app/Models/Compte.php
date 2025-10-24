@@ -172,4 +172,30 @@ class Compte extends Model
     {
         return $query->where('solde', '>', 0);
     }
+
+    /**
+     * Scope global pour récupérer les comptes non supprimés
+     */
+    public function scopeNonSupprimes($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    /**
+     * Scope local pour récupérer un compte par son numéro
+     */
+    public function scopeNumero($query, $numero)
+    {
+        return $query->where('numero_compte', $numero);
+    }
+
+    /**
+     * Scope local pour récupérer les comptes d'un client basé sur le téléphone
+     */
+    public function scopeClient($query, $telephone)
+    {
+        return $query->whereHas('client', function ($q) use ($telephone) {
+            $q->where('telephone', $telephone);
+        });
+    }
 }

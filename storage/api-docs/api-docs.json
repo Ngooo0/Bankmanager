@@ -367,17 +367,25 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Données récupérées avec succès"
+                                        },
                                         "data": {
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/components/schemas/Compte"
                                             }
                                         },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
                                         "links": {
                                             "$ref": "#/components/schemas/PaginationLinks"
-                                        },
-                                        "meta": {
-                                            "$ref": "#/components/schemas/PaginationMeta"
                                         }
                                     },
                                     "type": "object"
@@ -643,6 +651,357 @@
                     {
                         "passport": [
                             "write-comptes"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/v1/comptes/archives/epargne": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Lister les comptes épargne archivés",
+                "description": "Récupère la liste paginée des comptes épargne archivés depuis le cloud",
+                "operationId": "f76ddd90ebcb153fd6221468d160715f",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de la page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par titulaire ou numéro",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Tri",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "dateCreation",
+                            "enum": [
+                                "dateCreation",
+                                "solde",
+                                "titulaire"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes épargne archivés récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Comptes épargne archivés récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440001"
+                                                    },
+                                                    "numeroCompte": {
+                                                        "type": "string",
+                                                        "example": "SN2023000001"
+                                                    },
+                                                    "titulaire": {
+                                                        "type": "string",
+                                                        "example": "Amadou Diallo"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "epargne"
+                                                    },
+                                                    "solde": {
+                                                        "type": "number",
+                                                        "format": "decimal",
+                                                        "example": 1250000
+                                                    },
+                                                    "devise": {
+                                                        "type": "string",
+                                                        "example": "FCFA"
+                                                    },
+                                                    "dateCreation": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2023-03-15T00:00:00Z"
+                                                    },
+                                                    "statut": {
+                                                        "type": "string",
+                                                        "example": "archive"
+                                                    },
+                                                    "metadata": {
+                                                        "properties": {
+                                                            "derniereModification": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            },
+                                                            "version": {
+                                                                "type": "integer"
+                                                            },
+                                                            "dateArchivage": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-comptes"
+                        ]
+                    }
+                ]
+            }
+        },
+        "/api/v1/clients": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Lister les clients",
+                "description": "Récupère la liste paginée des clients",
+                "operationId": "9021c13d35fd0f16f857cec430e687de",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Numéro de la page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par nom ou email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des clients récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Clients récupérés avec succès"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Client"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        },
+                                        "links": {
+                                            "$ref": "#/components/schemas/PaginationLinks"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "read-clients"
+                        ]
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Créer un client",
+                "description": "Crée un nouveau client dans le système",
+                "operationId": "9180995b6acb9dbbc7e105f0d2e4017b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom_complet",
+                                    "email",
+                                    "telephone"
+                                ],
+                                "properties": {
+                                    "nom_complet": {
+                                        "type": "string",
+                                        "example": "Amadou Diallo"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "amadou.diallo@example.com"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "+221771234567"
+                                    },
+                                    "date_naissance": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-15"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "Dakar, Sénégal"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client créé avec succès"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides"
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès refusé"
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "write-clients"
                         ]
                     }
                 ]
@@ -1620,9 +1979,9 @@
                 "description": "Laravel Passport OAuth2 security.",
                 "flows": {
                     "password": {
-                        "authorizationUrl": "http://localhost:8000/oauth/authorize",
-                        "tokenUrl": "http://localhost:8000/oauth/token",
-                        "refreshUrl": "http://localhost:8000/oauth/token/refresh",
+                        "authorizationUrl": "https://your-railway-app-url.railway.app/oauth/authorize",
+                        "tokenUrl": "https://your-railway-app-url.railway.app/oauth/token",
+                        "refreshUrl": "https://your-railway-app-url.railway.app/oauth/token/refresh",
                         "scopes": {
                             "read-clients": "Lire les clients",
                             "write-clients": "Créer/modifier les clients",

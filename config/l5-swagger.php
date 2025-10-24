@@ -6,8 +6,13 @@ return [
         'default' => [
             'api' => [
                 'title' => 'BankManager API',
-                'description' => 'API de gestion bancaire pour BankManager',
+                'description' => 'API de gestion bancaire pour BankManager - Gestion des clients, comptes et transactions',
                 'version' => '1.0.0',
+                'host' => env('APP_URL', 'http://localhost:8000'),
+                'basePath' => '/api/v1',
+                'schemes' => ['http', 'https'],
+                'consumes' => ['application/json'],
+                'produces' => ['application/json'],
             ],
 
             'routes' => [
@@ -16,6 +21,7 @@ return [
                  */
                 'api' => 'api/documentation',
             ],
+            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', env('APP_ENV') !== 'production'),
             'paths' => [
                 /*
                  * Edit to include full URL in ui for assets
