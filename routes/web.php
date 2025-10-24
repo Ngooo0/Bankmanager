@@ -6,7 +6,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route pour la documentation Swagger
+// Routes pour la documentation Swagger
 Route::get('/api/documentation', function () {
     return redirect('/docs');
 });
+
+Route::get('/docs', function () {
+    return view('vendor.l5-swagger.index');
+});
+
