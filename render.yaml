@@ -28,14 +28,14 @@ services:
         value: false
       - key: DB_CONNECTION
         value: pgsql
-      # Variables Railway - à remplacer par vos vraies valeurs
+      # Variables Railway
       - key: DB_HOST
-        value: YOUR_RAILWAY_DB_HOST
+        value: containers-us-west-1.railway.app
       - key: DB_PORT
-        value: YOUR_RAILWAY_DB_PORT
+        value: 1234
       - key: DB_DATABASE
-        value: YOUR_RAILWAY_DB_NAME
+        value: railway
       - key: DB_USERNAME
-        value: YOUR_RAILWAY_DB_USER
+        value: postgres
       - key: DB_PASSWORD
-        value: YOUR_RAILWAY_DB_PASSWORD
+        value: hUpXRElCfFBvUcqOczDStyBOYfVoferR
