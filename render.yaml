@@ -26,6 +26,10 @@ services:
         value: array
       - key: L5_SWAGGER_GENERATE_ALWAYS
         value: false
+      - key: APP_URL
+        value: https://bankmanager-6.onrender.com
+      - key: L5_SWAGGER_CONST_HOST
+        value: https://bankmanager-6.onrender.com
       - key: DB_CONNECTION
         value: pgsql
       # Variables Railway
