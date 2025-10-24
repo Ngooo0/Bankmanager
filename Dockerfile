@@ -40,17 +40,17 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_KEY=" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=${APP_URL}" >> .env && \
+    echo "APP_URL=http://localhost" >> .env && \
     echo "" >> .env && \
     echo "LOG_CHANNEL=stack" >> .env && \
     echo "LOG_LEVEL=error" >> .env && \
     echo "" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=\${DB_HOST}" >> .env && \
-    echo "DB_PORT=\${DB_PORT}" >> .env && \
-    echo "DB_DATABASE=\${DB_DATABASE}" >> .env && \
-    echo "DB_USERNAME=\${DB_USERNAME}" >> .env && \
-    echo "DB_PASSWORD=\${DB_PASSWORD}" >> .env && \
+    echo "DB_HOST=ballast.proxy.rlwy.net" >> .env && \
+    echo "DB_PORT=44054" >> .env && \
+    echo "DB_DATABASE=railway" >> .env && \
+    echo "DB_USERNAME=postgres" >> .env && \
+    echo "DB_PASSWORD=qaPPTWkqUEngIkSozVbfwWvgqNMrxWou" >> .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
@@ -59,13 +59,13 @@ RUN echo "APP_NAME=Laravel" > .env && \
 # Changer les permissions du fichier .env pour l'utilisateur laravel
 RUN chown laravel:laravel .env
 
-# Ne pas générer la clé et optimiser pendant le build - le faire au runtime
-# USER laravel
-# RUN php artisan key:generate --force && \
-#     php artisan config:cache && \
-#     php artisan route:cache && \
-#     php artisan view:cache
-# USER root
+# Générer la clé d'application et optimiser
+USER laravel
+RUN php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+USER root
 
 # Copier le script d'entrée
 COPY docker-entrypoint.sh /usr/local/bin/
@@ -74,8 +74,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Passer à l'utilisateur non-root
 USER laravel
 
-# Exposer le port 10000 pour Render
-EXPOSE 10000
+# Exposer le port 8000
+EXPOSE 8000
 
-# Commande par défaut pour Render
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
+# Commande par défaut
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
