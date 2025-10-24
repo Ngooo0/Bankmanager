@@ -22,11 +22,14 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::prefix('v1')->middleware(['cors', 'throttle:api'])->group(function () {
     Route::middleware(['auth:api'])->group(function () {
+        // Routes Clients
+        Route::apiResource('clients', ClientController::class);
+
+        // Routes Transactions
+        Route::apiResource('transactions', TransactionController::class);
+
+        // Routes Comptes
         Route::get('/comptes', [CompteController::class, 'index']);
         Route::get('/comptes/archives/epargne', [CompteController::class, 'archivedEpargne'])->middleware('rating.limit');
-
-        // Routes d'exemple pour démonstration
-        Route::get('/clients', [ExampleController::class, 'indexClients']);
-        Route::post('/clients', [ExampleController::class, 'storeClient']);
     });
 });
