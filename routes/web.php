@@ -10,28 +10,14 @@ Route::get('/', function () {
 // Route de debug temporaire
 Route::get('/debug', function () {
     try {
-        // Test de connexion à la base de données
-        \DB::connection()->getPdo();
-        $dbStatus = 'Connexion DB OK';
-
-        // Test des migrations
-        $migrations = \DB::table('migrations')->count();
-        $migrationStatus = "Migrations: {$migrations} exécutées";
-
-        // Test des tables principales
-        $tables = [
-            'clients' => \DB::table('clients')->count(),
-            'comptes' => \DB::table('comptes')->count(),
-            'transactions' => \DB::table('transactions')->count(),
-        ];
-
+        // Test basique sans DB
         return response()->json([
             'status' => 'OK',
-            'database' => $dbStatus,
-            'migrations' => $migrationStatus,
-            'tables' => $tables,
+            'message' => 'Application fonctionne',
             'environment' => app()->environment(),
             'url' => config('app.url'),
+            'laravel_version' => app()->version(),
+            'php_version' => PHP_VERSION,
         ]);
     } catch (\Exception $e) {
         return response()->json([
