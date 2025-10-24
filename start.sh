@@ -7,6 +7,12 @@ echo "🚀 Démarrage de BankManager API..."
 echo "⏳ Attente de la base de données..."
 sleep 15
 
+# Définir APP_URL si RENDER_EXTERNAL_URL est disponible
+if [ -n "$RENDER_EXTERNAL_URL" ]; then
+    echo "🌐 Configuration de l'URL Render: $RENDER_EXTERNAL_URL"
+    export APP_URL=$RENDER_EXTERNAL_URL
+fi
+
 # Générer la clé d'application si nécessaire
 echo "🔑 Génération de la clé d'application..."
 if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
@@ -30,6 +36,13 @@ php artisan migrate --force --no-interaction
 # Générer la documentation Swagger
 echo "📚 Génération de la documentation Swagger..."
 php artisan l5-swagger:generate --no-interaction
+
+# Vérifier que la documentation a été générée
+if [ -f "storage/api-docs/api-docs.json" ]; then
+    echo "✅ Documentation Swagger générée avec succès"
+else
+    echo "❌ Échec de la génération de la documentation Swagger"
+fi
 
 # Optimisations pour la production
 echo "⚡ Optimisations pour la production..."

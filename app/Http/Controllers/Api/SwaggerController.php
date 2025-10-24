@@ -26,7 +26,26 @@ class SwaggerController extends Controller
      */
     public function redirect()
     {
-        return redirect('/docs');
+        try {
+            // Test basique sans DB
+            return response()->json([
+                'status' => 'OK',
+                'message' => 'Documentation Swagger accessible',
+                'environment' => app()->environment(),
+                'url' => config('app.url'),
+                'documentation_url' => config('app.url') . '/docs',
+                'swagger_json_url' => config('app.url') . '/docs/api-docs.json',
+                'laravel_version' => app()->version(),
+                'php_version' => PHP_VERSION,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'ERROR',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
+        }
     }
 
     /**
