@@ -7,5 +7,9 @@ Route::get('/', function () {
 });
 
 // Routes pour la documentation Swagger
-Route::get('/api/documentation', [App\Http\Controllers\Api\SwaggerController::class, 'redirect']);
-Route::get('/docs', [App\Http\Controllers\Api\SwaggerController::class, 'index']);
+Route::get('/api/documentation', function () {
+    return redirect()->away('https://bankmanager-5.onrender.com/docs');
+});
+Route::get('/docs', function () {
+    return redirect()->away('https://bankmanager-5.onrender.com/docs');
+});
