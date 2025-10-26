@@ -18,5 +18,9 @@ Route::get('/api/documentation', function () {
 Route::get('/docs', function () {
     return view('vendor.l5-swagger.index');
 })->middleware(['web']);
+// Route pour /api/docs
+Route::get('/api/docs', function () {
+    return view('vendor.l5-swagger.index');
+})->middleware(['web']);
 
 
