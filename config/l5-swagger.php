@@ -5,7 +5,14 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'L5 Swagger UI',
+                'title' => 'BankManager API',
+                'description' => 'API de gestion bancaire pour BankManager - Gestion des clients, comptes et transactions',
+                'version' => '1.0.0',
+                'host' => env('APP_URL', 'http://localhost:8000'),
+                'basePath' => '/api/v1',
+                'schemes' => ['http', 'https'],
+                'consumes' => ['application/json'],
+                'produces' => ['application/json'],
             ],
 
             'routes' => [
@@ -15,6 +22,7 @@ return [
                 'api' => 'api/docs',
                 'docs' => 'api/documentation'
             ],
+            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', env('APP_ENV') !== 'production'),
             'paths' => [
                 /*
                  * Edit to include full URL in ui for assets
@@ -46,6 +54,7 @@ return [
                  */
                 'annotations' => [
                     base_path('app'),
+                    base_path('routes'),
                 ],
             ],
         ],
@@ -68,7 +77,9 @@ return [
             'middleware' => [
                 'api' => [],
                 'asset' => [],
-                'docs' => [],
+                // Protect docs in production via middleware; middleware will allow
+                // access when APP_ENV != 'production' or when SWAGGER_ENABLED=true
+                'docs' => [\App\Http\Middleware\AllowSwagger::class],
                 'oauth2_callback' => [],
             ],
 
@@ -194,42 +205,36 @@ return [
                 ],
                 */
 
-                /* Open API 3.0 support
                 'passport' => [ // Unique name of security
                     'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Laravel passport oauth2 security.',
-                    'in' => 'header',
-                    'scheme' => 'https',
+                    'description' => 'Laravel Passport OAuth2 security.',
                     'flows' => [
-                        "password" => [
-                            "authorizationUrl" => config('app.url') . '/oauth/authorize',
-                            "tokenUrl" => config('app.url') . '/oauth/token',
-                            "refreshUrl" => config('app.url') . '/token/refresh',
-                            "scopes" => []
+                        'password' => [
+                            'authorizationUrl' => config('app.url') . '/oauth/authorize',
+                            'tokenUrl' => config('app.url') . '/oauth/token',
+                            'refreshUrl' => config('app.url') . '/oauth/token/refresh',
+                            'scopes' => [
+                                'read-clients' => 'Lire les clients',
+                                'write-clients' => 'Créer/modifier les clients',
+                                'read-comptes' => 'Lire les comptes',
+                                'write-comptes' => 'Créer/modifier les comptes',
+                                'read-transactions' => 'Lire les transactions',
+                                'write-transactions' => 'Créer des transactions',
+                            ]
                         ],
                     ],
                 ],
-                'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Enter token in format (Bearer <token>)',
-                    'name' => 'Authorization', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
-                ],
-                */
             ],
             'security' => [
-                /*
-                 * Examples of Securities
-                 */
                 [
-                    /*
-                    'oauth2_security_example' => [
-                        'read',
-                        'write'
-                    ],
-
-                    'passport' => []
-                    */
+                    'passport' => [
+                        'read-clients',
+                        'write-clients',
+                        'read-comptes',
+                        'write-comptes',
+                        'read-transactions',
+                        'write-transactions'
+                    ]
                 ],
             ],
         ],

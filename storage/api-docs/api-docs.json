@@ -1007,36 +1007,6 @@
                 ]
             }
         },
-        "/api/documentation": {
-            "get": {
-                "tags": [
-                    "Documentation"
-                ],
-                "summary": "Redirection vers la documentation Swagger",
-                "description": "Redirige vers l'interface Swagger UI",
-                "operationId": "72fa932e7f7fd0785458df7904330872",
-                "responses": {
-                    "302": {
-                        "description": "Redirection vers /docs"
-                    }
-                }
-            }
-        },
-        "/docs": {
-            "get": {
-                "tags": [
-                    "Documentation"
-                ],
-                "summary": "Interface Swagger UI",
-                "description": "Affiche l'interface interactive de documentation Swagger",
-                "operationId": "e4ced44f2fda9ad7882610ed4a87c979",
-                "responses": {
-                    "200": {
-                        "description": "Interface Swagger UI affichée"
-                    }
-                }
-            }
-        },
         "/api/transactions": {
             "get": {
                 "tags": [
@@ -2033,10 +2003,6 @@
         {
             "name": "Comptes",
             "description": "API Endpoints pour la gestion des comptes bancaires"
-        },
-        {
-            "name": "Documentation",
-            "description": "Endpoints pour accéder à la documentation API"
         },
         {
             "name": "Transactions",

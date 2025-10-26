@@ -10,11 +10,12 @@
         "laravel/framework": "^12.0",
         "laravel/passport": "^13.2",
         "laravel/tinker": "^2.10.1",
-        "ramsey/uuid": "^4.9"
+        "ramsey/uuid": "^4.9",
+        "darkaonline/l5-swagger": "8.*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
-        "darkaonline/l5-swagger": "8.*",
+        
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
@@ -55,6 +56,9 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
+        ],
+        "post-install-cmd": [
+            "@php artisan l5-swagger:generate --no-interaction"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
