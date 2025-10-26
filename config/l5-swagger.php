@@ -8,7 +8,7 @@ return [
                 'title' => 'BankManager API',
                 'description' => 'API de gestion bancaire pour BankManager - Gestion des clients, comptes et transactions',
                 'version' => '1.0.0',
-                'host' => env('APP_URL', 'https://your-railway-app-url.railway.app'),
+                'host' => env('APP_URL', 'https://bankmanager-5.onrender.com'),
                 'basePath' => '/api/v1',
                 'schemes' => ['https'],
                 'consumes' => ['application/json'],
