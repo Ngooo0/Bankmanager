@@ -8,9 +8,9 @@ return [
                 'title' => 'BankManager API',
                 'description' => 'API de gestion bancaire pour BankManager - Gestion des clients, comptes et transactions',
                 'version' => '1.0.0',
-                'host' => env('APP_URL', 'http://localhost:8000'),
+                'host' => env('APP_URL', 'https://your-railway-app-url.railway.app'),
                 'basePath' => '/api/v1',
-                'schemes' => ['http', 'https'],
+                'schemes' => ['https'],
                 'consumes' => ['application/json'],
                 'produces' => ['application/json'],
             ],
@@ -208,9 +208,9 @@ return [
                     'description' => 'Laravel Passport OAuth2 security.',
                     'flows' => [
                         'password' => [
-                            'authorizationUrl' => config('app.url') . '/oauth/authorize',
-                            'tokenUrl' => config('app.url') . '/oauth/token',
-                            'refreshUrl' => config('app.url') . '/oauth/token/refresh',
+                            'authorizationUrl' => env('APP_URL', 'https://your-railway-app-url.railway.app') . '/oauth/authorize',
+                            'tokenUrl' => env('APP_URL', 'https://your-railway-app-url.railway.app') . '/oauth/token',
+                            'refreshUrl' => env('APP_URL', 'https://your-railway-app-url.railway.app') . '/oauth/token/refresh',
                             'scopes' => [
                                 'read-clients' => 'Lire les clients',
                                 'write-clients' => 'Créer/modifier les clients',
