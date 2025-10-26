@@ -19,7 +19,8 @@ return [
                 /*
                  * Route for accessing api documentation interface
                  */
-                'api' => 'api/documentation',
+                'api' => 'api/docs',
+                'docs' => 'api/documentation'
             ],
             'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', env('APP_ENV') !== 'production'),
             'paths' => [
