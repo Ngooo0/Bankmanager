@@ -24,7 +24,7 @@ return [
                 // route that shows the Swagger UI (must differ from 'api')
                 'docs' => 'api/documentation'
             ],
-            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', env('APP_ENV') !== 'production'),
+            'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),
             'paths' => [
                 /*
                  * Edit to include full URL in ui for assets

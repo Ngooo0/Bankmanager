@@ -20,21 +20,9 @@ class AllowSwagger
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Allow in non-production by default
-        if (!app()->environment('production')) {
-            return $next($request);
-        }
-
-        // In production, allow only if SWAGGER_ENABLED is truthy
-        $enabled = filter_var(env('SWAGGER_ENABLED', false), FILTER_VALIDATE_BOOLEAN);
-
-        if ($enabled) {
-            return $next($request);
-        }
-
-        // Otherwise return 403 Forbidden
-        return response()->json([
-            'message' => 'Documentation unavailable.',
-        ], 403);
+        // Allow in production for demonstration purposes
+        // In a real production environment, you might want to restrict this
+        // or require authentication
+        return $next($request);
     }
 }
