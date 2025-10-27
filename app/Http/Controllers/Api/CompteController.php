@@ -467,14 +467,14 @@ class CompteController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/api/comptes/{id}",
+     * @OA\Patch(
+     *     path="/api/v1/comptes/{compteId}",
      *     tags={"Comptes"},
      *     summary="Mettre à jour un compte",
-     *     description="Met à jour les informations d'un compte bancaire",
+     *     description="Met à jour les informations d'un compte bancaire et de son titulaire. Tous les champs sont optionnels mais au moins un champ doit être fourni.",
      *     security={{"passport": {"write-comptes"}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         description="UUID du compte",
      *         required=true,
@@ -483,31 +483,125 @@ class CompteController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="statut", type="string", enum={"actif", "bloque", "ferme"}, description="Nouveau statut du compte"),
-     *             @OA\Property(property="notes", type="string", description="Notes sur le compte")
+     *             @OA\Property(property="titulaire", type="string", minLength=2, maxLength=255, description="Nouveau nom du titulaire"),
+     *             @OA\Property(property="informationsClient", type="object", description="Informations du client à mettre à jour",
+     *                 @OA\Property(property="telephone", type="string", description="Nouveau numéro de téléphone sénégalais"),
+     *                 @OA\Property(property="email", type="string", format="email", description="Nouvel email"),
+     *                 @OA\Property(property="password", type="string", minLength=8, description="Nouveau mot de passe"),
+     *                 @OA\Property(property="nci", type="string", description="Nouveau numéro NCI sénégalais")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Compte mis à jour avec succès",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte mis à jour avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Amadou Diallo Junior"),
+     *                 @OA\Property(property="type", type="string", example="epargne"),
+     *                 @OA\Property(property="solde", type="number", format="decimal", example=1250000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2023-03-15T00:00:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="bloque"),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer")
+     *                 )
+     *             )
+     *         )
      *     ),
-     *     @OA\Response(response=400, description="Données invalides"),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Données invalides ou aucun champ fourni",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(property="details", type="object")
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=404, description="Compte non trouvé"),
      *     @OA\Response(response=401, description="Non authentifié"),
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateCompteRequest $request, string $compteId): JsonResponse
     {
-        $request->validate([
-            'statut' => 'sometimes|in:actif,bloque,ferme',
-        ]);
+        $user = auth()->user();
+        $validated = $request->validated();
 
-        $compte = Compte::findOrFail($id);
-        $compte->update($request->only(['statut']));
+        // Récupérer le compte avec son client
+        $compte = Compte::with('client')->findOrFail($compteId);
 
-        return response()->json($compte->load('client'));
+        // Vérification des autorisations
+        if ($user->role !== 'admin' && $compte->client_id !== $user->client_id) {
+            return $this->errorResponse('Accès non autorisé à ce compte', 403);
+        }
+
+        DB::transaction(function () use ($validated, $compte) {
+            $clientUpdates = [];
+            $compteUpdates = [];
+
+            // Préparer les mises à jour du compte
+            if (isset($validated['titulaire'])) {
+                $compteUpdates['titulaire'] = $validated['titulaire'];
+            }
+
+            // Préparer les mises à jour du client
+            if (isset($validated['informationsClient'])) {
+                $clientData = $validated['informationsClient'];
+
+                if (isset($clientData['telephone'])) {
+                    $clientUpdates['telephone'] = $clientData['telephone'];
+                }
+
+                if (isset($clientData['email'])) {
+                    $clientUpdates['email'] = $clientData['email'];
+                }
+
+                if (isset($clientData['password'])) {
+                    $clientUpdates['password'] = $clientData['password'];
+                }
+
+                if (isset($clientData['nci'])) {
+                    $clientUpdates['nci'] = $clientData['nci'];
+                }
+            }
+
+            // Mettre à jour le compte si nécessaire
+            if (!empty($compteUpdates)) {
+                $compte->update($compteUpdates);
+            }
+
+            // Mettre à jour le client si nécessaire
+            if (!empty($clientUpdates)) {
+                $compte->client->update($clientUpdates);
+            }
+        });
+
+        // Recharger les relations
+        $compte->load('client');
+
+        // Formater la réponse selon la spécification
+        $data = [
+            'id' => $compte->id,
+            'numeroCompte' => $compte->numero_compte,
+            'titulaire' => $compte->titulaire,
+            'type' => $compte->type,
+            'solde' => $compte->solde,
+            'devise' => $compte->devise,
+            'dateCreation' => $compte->date_creation?->toISOString(),
+            'statut' => $compte->statut,
+            'metadata' => $compte->metadata,
+        ];
+
+        return $this->successResponse($data, 'Compte mis à jour avec succès');
     }
 
     /**
