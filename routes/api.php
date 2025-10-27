@@ -35,6 +35,7 @@ Route::prefix('v1')->middleware(['cors', 'throttle:api'])->group(function () {
         Route::post('/comptes', [CompteController::class, 'store'])->middleware('logging');
         Route::get('/comptes/{compteId}', [CompteController::class, 'show']);
         Route::patch('/comptes/{compteId}', [CompteController::class, 'update'])->middleware('logging');
+        Route::delete('/comptes/{compteId}', [CompteController::class, 'destroy'])->middleware('logging');
         Route::get('/comptes/archives/epargne', [CompteController::class, 'archivedEpargne'])->middleware('rating.limit');
     });
 });

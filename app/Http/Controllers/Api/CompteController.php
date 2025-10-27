@@ -606,42 +606,88 @@ class CompteController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/comptes/{id}",
+     *     path="/api/v1/comptes/{compteId}",
      *     tags={"Comptes"},
-     *     summary="Fermer un compte",
-     *     description="Ferme un compte bancaire (soft delete)",
+     *     summary="Supprimer un compte (soft delete)",
+     *     description="Effectue une suppression douce du compte bancaire en le marquant comme fermé",
      *     security={{"passport": {"write-comptes"}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         description="UUID du compte",
      *         required=true,
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
-     *         response=204,
-     *         description="Compte fermé avec succès"
+     *         response=200,
+     *         description="Compte supprimé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="statut", type="string", example="ferme"),
+     *                 @OA\Property(property="dateFermeture", type="string", format="date-time", example="2025-10-19T11:15:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Impossible de supprimer un compte avec solde positif",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="SOLDE_POSITIF"),
+     *                 @OA\Property(property="message", type="string", example="Impossible de supprimer un compte avec un solde positif. Veuillez d'abord transférer les fonds.")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(response=404, description="Compte non trouvé"),
      *     @OA\Response(response=401, description="Non authentifié"),
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(string $compteId): JsonResponse
     {
-        $compte = Compte::findOrFail($id);
+        $user = auth()->user();
+
+        // Récupérer le compte avec son client
+        $compte = Compte::with('client')->findOrFail($compteId);
+
+        // Vérification des autorisations
+        if ($user->role !== 'admin' && $compte->client_id !== $user->client_id) {
+            return $this->errorResponse('Accès non autorisé à ce compte', 403);
+        }
 
         // Vérifier si le compte a un solde positif
         if ($compte->solde > 0) {
-            return response()->json([
-                'error' => 'Impossible de fermer un compte avec un solde positif. Veuillez d\'abord transférer les fonds.'
-            ], 400);
+            return $this->errorResponse(
+                'Impossible de supprimer un compte avec un solde positif. Veuillez d\'abord transférer les fonds.',
+                400,
+                ['code' => 'SOLDE_POSITIF']
+            );
         }
 
-        $compte->update(['statut' => 'ferme']);
+        // Effectuer le soft delete avec mise à jour du statut
+        $compte->update([
+            'statut' => 'ferme',
+            'metadata' => array_merge($compte->metadata ?? [], [
+                'dateFermeture' => now()->toISOString()
+            ])
+        ]);
+
         $compte->delete();
 
-        return response()->json(null, 204);
+        // Formater la réponse selon la spécification
+        $data = [
+            'id' => $compte->id,
+            'numeroCompte' => $compte->numero_compte,
+            'statut' => $compte->statut,
+            'dateFermeture' => $compte->metadata['dateFermeture'] ?? now()->toISOString(),
+        ];
+
+        return $this->successResponse($data, 'Compte supprimé avec succès');
     }
 
     /**
