@@ -82,4 +82,5 @@ USER laravel
 EXPOSE 10000
 
 # Commande par défaut
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
