@@ -25,7 +25,7 @@ chmod -R 775 storage bootstrap/cache || true
 
 # Generate Swagger docs
 echo "📚 Generating Swagger docs"
-php artisan l5-swagger:generate --no-interaction
+php artisan l5-swagger:generate --no-interaction || echo "Swagger generation failed, continuing..."
 
 # Optional: cache routes and views
 php artisan view:cache || true
