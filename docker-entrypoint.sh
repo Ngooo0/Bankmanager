@@ -1,23 +1,40 @@
 #!/bin/sh
-# Installer postgresql-client si nécessaire
-echo "Waiting for database to be ready..."
 
-# Boucle d'attente simplifiée (sans pg_isready)
-max_attempts=30
-attempt=0
-until php artisan migrate --force 2>/dev/null || [ $attempt -eq $max_attempts ]; do
-    echo "Database is unavailable - sleeping (attempt $attempt/$max_attempts)"
-    attempt=$((attempt + 1))
-    sleep 2
-done
+echo "🚀 Starting BankManager application..."
 
-if [ $attempt -eq $max_attempts ]; then
-    echo "Could not connect to database after $max_attempts attempts"
-    echo "Continuing anyway..."
+# Vérifier que PHP fonctionne
+if ! php --version > /dev/null 2>&1; then
+    echo "❌ PHP is not available"
+    exit 1
 fi
 
-echo "Database is up - migrations completed"
-echo "Starting Laravel application..."
+echo "✅ PHP is working"
+
+# Vérifier que Laravel est installé
+if [ ! -f "artisan" ]; then
+    echo "❌ Laravel artisan file not found"
+    exit 1
+fi
+
+echo "✅ Laravel artisan found"
+
+# Tester la connectivité de base de données (optionnel)
+echo "🔍 Testing database connectivity..."
+if php artisan migrate:status > /dev/null 2>&1; then
+    echo "✅ Database is accessible"
+
+    # Exécuter les migrations si nécessaire
+    echo "🗄️ Running migrations..."
+    if php artisan migrate --force; then
+        echo "✅ Migrations completed"
+    else
+        echo "⚠️ Migrations failed, continuing..."
+    fi
+else
+    echo "⚠️ Database not accessible, skipping migrations"
+fi
+
+echo "🎯 Starting Laravel application..."
 
 # Lancer la commande passée en argument
 exec "$@"
