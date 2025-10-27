@@ -36,11 +36,11 @@ RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
     && chmod -R 775 storage bootstrap/cache
 
 # Créer un fichier .env minimal pour le build
-RUN echo "APP_NAME=Laravel" > .env && \
+RUN echo "APP_NAME=BankManager" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_KEY=" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
-    echo "APP_URL=https://your-railway-app-url.railway.app" >> .env && \
+    echo "APP_URL=https://bankmanager-5.onrender.com" >> .env && \
     echo "" >> .env && \
     echo "LOG_CHANNEL=stack" >> .env && \
     echo "LOG_LEVEL=error" >> .env && \
