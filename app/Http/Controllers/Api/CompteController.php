@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Compte;
+use App\Services\CloudStorageService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -19,38 +20,38 @@ use Illuminate\Support\Facades\DB;
 class CompteController extends Controller
 {
     use ApiResponseTrait;
+
+    protected $cloudStorageService;
+
+    public function __construct(CloudStorageService $cloudStorageService)
+    {
+        $this->cloudStorageService = $cloudStorageService;
+    }
     /**
      * @OA\Get(
-     *     path="/api/comptes",
+     *     path="/api/v1/comptes",
      *     tags={"Comptes"},
      *     summary="Lister tous les comptes",
-     *     description="Récupère la liste paginée de tous les comptes bancaires",
+     *     description="Récupère la liste paginée de tous les comptes bancaires non supprimés (type épargne ou chèque, statut actif)",
      *     security={{"passport": {"read-comptes"}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Numéro de la page",
+     *         description="Numéro de page",
      *         required=false,
      *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
-     *         name="per_page",
+     *         name="limit",
      *         in="query",
      *         description="Nombre d'éléments par page",
      *         required=false,
-     *         @OA\Schema(type="integer", default=15)
-     *     ),
-     *     @OA\Parameter(
-     *         name="client_id",
-     *         in="query",
-     *         description="Filtrer par client UUID",
-     *         required=false,
-     *         @OA\Schema(type="string", format="uuid")
+     *         @OA\Schema(type="integer", default=10, maximum=100)
      *     ),
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
-     *         description="Filtrer par type de compte",
+     *         description="Filtrer par type",
      *         required=false,
      *         @OA\Schema(type="string", enum={"epargne", "cheque"})
      *     ),
@@ -61,13 +62,47 @@ class CompteController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"})
      *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Recherche par titulaire ou numéro",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Tri",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"dateCreation", "solde", "titulaire"}, default="dateCreation")
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Ordre",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
+     *     ),
      * @OA\Response(
      *         response=200,
      *         description="Liste des comptes récupérée avec succès",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Données récupérées avec succès"),
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Compte")),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Amadou Diallo"),
+     *                 @OA\Property(property="type", type="string", example="epargne"),
+     *                 @OA\Property(property="solde", type="number", format="decimal", example=1250000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2023-03-15T00:00:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="bloque"),
+     *                 @OA\Property(property="motifBlocage", type="string", example="Inactivité de 30+ jours", nullable=true),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer")
+     *                 )
+     *             )),
      *             @OA\Property(property="pagination", ref="#/components/schemas/PaginationMeta"),
      *             @OA\Property(property="links", ref="#/components/schemas/PaginationLinks")
      *         )
@@ -78,24 +113,68 @@ class CompteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Compte::with('client')->nonSupprimes();
+        $user = auth()->user();
 
-        if ($request->has('client_id') && !empty($request->client_id)) {
-            $query->where('client_id', $request->client_id);
+        $query = Compte::with('client')->nonSupprimes()
+            ->whereIn('type', ['epargne', 'cheque'])
+            ->where('statut', 'actif');
+
+        // Filtrage par rôle : admin voit tous, client voit ses comptes
+        if ($user->role !== 'admin') {
+            $query->where('client_id', $user->client_id ?? $user->id);
         }
 
-        if ($request->has('type') && !empty($request->type)) {
+        // Filtrage par type
+        if ($request->has('type') && in_array($request->type, ['epargne', 'cheque'])) {
             $query->where('type', $request->type);
         }
 
-        if ($request->has('statut') && !empty($request->statut)) {
+        // Filtrage par statut
+        if ($request->has('statut') && in_array($request->statut, ['actif', 'bloque', 'ferme'])) {
             $query->where('statut', $request->statut);
         }
 
-        $comptes = $query->paginate($request->get('per_page', 15));
+        // Recherche par titulaire ou numéro
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('titulaire', 'like', "%{$search}%")
+                  ->orWhere('numero_compte', 'like', "%{$search}%");
+            });
+        }
+
+        // Tri
+        $sortField = $request->get('sort', 'dateCreation');
+        $sortOrder = $request->get('order', 'desc');
+
+        $allowedSorts = ['dateCreation' => 'date_creation', 'solde' => 'solde', 'titulaire' => 'titulaire'];
+        if (array_key_exists($sortField, $allowedSorts)) {
+            $query->orderBy($allowedSorts[$sortField], $sortOrder);
+        } else {
+            $query->orderBy('date_creation', 'desc');
+        }
+
+        $limit = min($request->get('limit', 10), 100);
+        $comptes = $query->paginate($limit);
+
+        // Formater les données selon la spécification
+        $data = $comptes->getCollection()->map(function ($compte) {
+            return [
+                'id' => $compte->id,
+                'numeroCompte' => $compte->numero_compte,
+                'titulaire' => $compte->titulaire,
+                'type' => $compte->type,
+                'solde' => $compte->solde,
+                'devise' => $compte->devise,
+                'dateCreation' => $compte->date_creation?->toISOString(),
+                'statut' => $compte->statut,
+                'motifBlocage' => $compte->statut === 'bloque' ? ($compte->metadata['motifBlocage'] ?? null) : null,
+                'metadata' => $compte->metadata,
+            ];
+        });
 
         return $this->paginatedResponse(
-            $comptes->items(),
+            $data,
             [
                 'currentPage' => $comptes->currentPage(),
                 'totalPages' => $comptes->lastPage(),
@@ -105,11 +184,11 @@ class CompteController extends Controller
                 'hasPrevious' => $comptes->currentPage() > 1
             ],
             [
-                'self' => $comptes->url($comptes->currentPage()),
+                'self' => $request->fullUrl(),
                 'next' => $comptes->nextPageUrl(),
                 'previous' => $comptes->previousPageUrl(),
-                'first' => $comptes->url(1),
-                'last' => $comptes->url($comptes->lastPage())
+                'first' => $request->fullUrlWithQuery(['page' => 1]),
+                'last' => $request->fullUrlWithQuery(['page' => $comptes->lastPage()])
             ]
         );
     }
@@ -183,13 +262,13 @@ class CompteController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/comptes/{id}",
+     *     path="/api/v1/comptes/{compteId}",
      *     tags={"Comptes"},
      *     summary="Afficher un compte",
-     *     description="Récupère les détails d'un compte bancaire spécifique",
+     *     description="Récupère les détails d'un compte bancaire spécifique. Recherche d'abord en local (comptes chèque ou épargne actifs), puis dans le cloud si non trouvé.",
      *     security={{"passport": {"read-comptes"}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         description="UUID du compte",
      *         required=true,
@@ -198,20 +277,103 @@ class CompteController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Compte trouvé",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Amadou Diallo"),
+     *                 @OA\Property(property="type", type="string", example="epargne"),
+     *                 @OA\Property(property="solde", type="number", format="decimal", example=1250000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2023-03-15T00:00:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="bloque"),
+     *                 @OA\Property(property="motifBlocage", type="string", example="Inactivité de 30+ jours", nullable=true),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer")
+     *                 )
+     *             )
+     *         )
      *     ),
-     *     @OA\Response(response=404, description="Compte non trouvé"),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas"),
+     *                 @OA\Property(property="details", type="object",
+     *                     @OA\Property(property="compteId", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000")
+     *                 )
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Non authentifié"),
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function show(string $id): JsonResponse
+    public function show(string $compteId): JsonResponse
     {
+        $user = auth()->user();
+
+        // Recherche en local d'abord (comptes chèque ou épargne actifs non supprimés)
         $compte = Compte::with(['client', 'transactions' => function ($query) {
             $query->latest()->limit(10);
-        }])->findOrFail($id);
+        }])
+        ->nonSupprimes()
+        ->whereIn('type', ['epargne', 'cheque'])
+        ->where('statut', 'actif')
+        ->find($compteId);
 
-        return response()->json($compte);
+        // Vérification des autorisations pour les comptes locaux
+        if ($compte) {
+            if ($user->role !== 'admin' && $compte->client_id !== $user->client_id) {
+                return $this->errorResponse('Accès non autorisé à ce compte', 403);
+            }
+
+            // Formater les données selon la spécification
+            $data = [
+                'id' => $compte->id,
+                'numeroCompte' => $compte->numero_compte,
+                'titulaire' => $compte->titulaire,
+                'type' => $compte->type,
+                'solde' => $compte->solde,
+                'devise' => $compte->devise,
+                'dateCreation' => $compte->date_creation?->toISOString(),
+                'statut' => $compte->statut,
+                'motifBlocage' => $compte->statut === 'bloque' ? ($compte->metadata['motifBlocage'] ?? null) : null,
+                'metadata' => $compte->metadata,
+            ];
+
+            return $this->successResponse($data);
+        }
+
+        // Si non trouvé en local, rechercher dans le cloud (comptes épargne archivés)
+        try {
+            $archivedComptes = $this->cloudStorageService->getArchivedEpargneComptes();
+
+            $archivedCompte = collect($archivedComptes)->firstWhere('id', $compteId);
+
+            if ($archivedCompte) {
+                // Vérifier si l'utilisateur a accès (admin seulement pour les comptes archivés)
+                if ($user->role !== 'admin') {
+                    return $this->errorResponse('Accès non autorisé aux comptes archivés', 403);
+                }
+
+                return $this->successResponse($archivedCompte);
+            }
+        } catch (\Exception $e) {
+            // Log l'erreur mais continue pour lancer l'exception CompteNotFound
+            \Log::warning('Erreur lors de la recherche dans le cloud', [
+                'compte_id' => $compteId,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Si non trouvé nulle part, lancer l'exception personnalisée
+        throw new \App\Exceptions\CompteNotFoundException($compteId);
     }
 
     /**
@@ -373,13 +535,41 @@ class CompteController extends Controller
     public function archivedEpargne(Request $request): JsonResponse
     {
         try {
-            // Simulation de récupération depuis le cloud (remplacer par l'implémentation réelle)
-            $cloudData = $this->fetchArchivedEpargneFromCloud($request);
+            // Récupération des paramètres de filtrage
+            $filters = [
+                'search' => $request->get('search'),
+                'sort' => $request->get('sort', 'dateCreation'),
+                'order' => $request->get('order', 'desc'),
+            ];
+
+            // Récupération des données depuis le cloud
+            $archivedAccounts = $this->cloudStorageService->getArchivedEpargneComptes($filters);
+
+            // Pagination manuelle
+            $page = $request->get('page', 1);
+            $limit = min($request->get('limit', 10), 100);
+            $totalItems = count($archivedAccounts);
+            $totalPages = ceil($totalItems / $limit);
+            $offset = ($page - 1) * $limit;
+            $paginatedData = array_slice($archivedAccounts, $offset, $limit);
 
             return $this->paginatedResponse(
-                $cloudData['data'],
-                $cloudData['pagination'],
-                $cloudData['links'],
+                $paginatedData,
+                [
+                    'currentPage' => $page,
+                    'totalPages' => $totalPages,
+                    'totalItems' => $totalItems,
+                    'itemsPerPage' => $limit,
+                    'hasNext' => $page < $totalPages,
+                    'hasPrevious' => $page > 1
+                ],
+                [
+                    'self' => $request->fullUrl(),
+                    'next' => $page < $totalPages ? $request->fullUrlWithQuery(['page' => $page + 1]) : null,
+                    'previous' => $page > 1 ? $request->fullUrlWithQuery(['page' => $page - 1]) : null,
+                    'first' => $request->fullUrlWithQuery(['page' => 1]),
+                    'last' => $request->fullUrlWithQuery(['page' => $totalPages])
+                ],
                 'Comptes épargne archivés récupérés avec succès'
             );
         } catch (\Exception $e) {
@@ -390,86 +580,4 @@ class CompteController extends Controller
         }
     }
 
-    /**
-     * Récupère les comptes épargne archivés depuis le cloud
-     */
-    private function fetchArchivedEpargneFromCloud(Request $request): array
-    {
-        // Simulation des données (remplacer par l'appel réel au cloud)
-        $page = $request->get('page', 1);
-        $limit = min($request->get('limit', 10), 100);
-        $search = $request->get('search');
-        $sort = $request->get('sort', 'dateCreation');
-        $order = $request->get('order', 'desc');
-
-        // Ici, intégrer l'appel au service cloud (AWS S3, Google Cloud, etc.)
-        // Exemple avec AWS SDK:
-        // $s3Client = new S3Client([...]);
-        // $result = $s3Client->getObject(['Bucket' => 'archived-accounts', 'Key' => 'epargne.json']);
-
-        // Simulation des données archivées
-        $archivedAccounts = [
-            [
-                'id' => '550e8400-e29b-41d4-a716-446655440001',
-                'numeroCompte' => 'SN2023000001',
-                'titulaire' => 'Amadou Diallo',
-                'type' => 'epargne',
-                'solde' => 1250000,
-                'devise' => 'FCFA',
-                'dateCreation' => '2023-03-15T00:00:00Z',
-                'statut' => 'archive',
-                'metadata' => [
-                    'derniereModification' => '2023-06-10T14:30:00Z',
-                    'version' => 1,
-                    'dateArchivage' => '2023-12-31T23:59:59Z'
-                ]
-            ],
-            // Plus de données simulées...
-        ];
-
-        // Appliquer les filtres
-        if ($search) {
-            $archivedAccounts = array_filter($archivedAccounts, function ($account) use ($search) {
-                return stripos($account['titulaire'], $search) !== false ||
-                       stripos($account['numeroCompte'], $search) !== false;
-            });
-        }
-
-        // Trier
-        usort($archivedAccounts, function ($a, $b) use ($sort, $order) {
-            $valueA = $a[$sort] ?? $a['dateCreation'];
-            $valueB = $b[$sort] ?? $b['dateCreation'];
-
-            if ($order === 'asc') {
-                return $valueA <=> $valueB;
-            } else {
-                return $valueB <=> $valueA;
-            }
-        });
-
-        // Pagination
-        $totalItems = count($archivedAccounts);
-        $totalPages = ceil($totalItems / $limit);
-        $offset = ($page - 1) * $limit;
-        $paginatedData = array_slice($archivedAccounts, $offset, $limit);
-
-        return [
-            'data' => $paginatedData,
-            'pagination' => [
-                'currentPage' => $page,
-                'totalPages' => $totalPages,
-                'totalItems' => $totalItems,
-                'itemsPerPage' => $limit,
-                'hasNext' => $page < $totalPages,
-                'hasPrevious' => $page > 1
-            ],
-            'links' => [
-                'self' => "/api/v1/comptes/archives/epargne?page={$page}&limit={$limit}",
-                'next' => $page < $totalPages ? "/api/v1/comptes/archives/epargne?page=" . ($page + 1) . "&limit={$limit}" : null,
-                'previous' => $page > 1 ? "/api/v1/comptes/archives/epargne?page=" . ($page - 1) . "&limit={$limit}" : null,
-                'first' => "/api/v1/comptes/archives/epargne?page=1&limit={$limit}",
-                'last' => "/api/v1/comptes/archives/epargne?page={$totalPages}&limit={$limit}"
-            ]
-        ];
-    }
 }

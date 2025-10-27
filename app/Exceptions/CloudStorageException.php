@@ -5,29 +5,52 @@ namespace App\Exceptions;
 use Exception;
 
 /**
- * Exception pour les erreurs de stockage cloud
+ * Exception personnalisée pour les erreurs de stockage cloud
  */
 class CloudStorageException extends Exception
 {
-    protected $errors;
-
-    public function __construct(string $message = 'Erreur de stockage cloud', array $errors = [], int $code = 0, \Throwable $previous = null)
+    /**
+     * Constructeur de l'exception
+     *
+     * @param string $message
+     * @param int $code
+     * @param \Throwable|null $previous
+     */
+    public function __construct(string $message = "", int $code = 0, \Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
-        $this->errors = $errors;
     }
 
-    public function getErrors(): array
+    /**
+     * Rapport de l'exception
+     *
+     * @return void
+     */
+    public function report()
     {
-        return $this->errors;
+        // Log l'erreur dans un canal spécifique si nécessaire
+        \Log::channel('cloud-storage')->error('Cloud Storage Error', [
+            'message' => $this->getMessage(),
+            'code' => $this->getCode(),
+            'file' => $this->getFile(),
+            'line' => $this->getLine(),
+            'trace' => $this->getTraceAsString()
+        ]);
     }
 
+    /**
+     * Rendu de l'exception pour l'API
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function render($request)
     {
         return response()->json([
             'success' => false,
-            'message' => $this->getMessage(),
-            'errors' => $this->errors,
+            'message' => 'Erreur de service cloud',
+            'error' => $this->getMessage(),
+            'code' => 'CLOUD_STORAGE_ERROR'
         ], 500);
     }
 }

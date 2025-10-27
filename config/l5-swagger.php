@@ -19,8 +19,10 @@ return [
                 /*
                  * Route for accessing api documentation interface
                  */
+                // route that returns the JSON spec
                 'api' => 'api/docs',
-                'docs' => 'api/docs'
+                // route that shows the Swagger UI (must differ from 'api')
+                'docs' => 'api/documentation'
             ],
             'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', env('APP_ENV') !== 'production'),
             'paths' => [
@@ -316,7 +318,7 @@ return [
          * Constants which can be used in annotations
          */
         'constants' => [
-            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://my-default-host.com'),
+            'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'https://bankmanager-5.onrender.com'),
         ],
     ],
 ];
