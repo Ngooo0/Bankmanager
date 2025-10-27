@@ -72,6 +72,7 @@ class Compte extends Model
      */
     protected $appends = [
         'solde_formate',
+        'solde_calcule',
     ];
 
     /**
@@ -132,6 +133,23 @@ class Compte extends Model
     public function getSoldeFormateAttribute(): string
     {
         return number_format($this->solde, 2, ',', ' ') . ' ' . $this->devise;
+    }
+
+    /**
+     * Accesseur pour le solde calculé (somme des dépôts - somme des retraits)
+     */
+    public function getSoldeCalculeAttribute(): float
+    {
+        // Calculer le solde basé sur les transactions
+        $debits = $this->transactions()
+            ->where('type', 'retrait')
+            ->sum('montant');
+
+        $credits = $this->transactions()
+            ->where('type', 'depot')
+            ->sum('montant');
+
+        return $credits - $debits;
     }
 
     /**

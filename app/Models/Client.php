@@ -46,6 +46,7 @@ class Client extends Model
         'pays',
         'code_postal',
         'numero_identification',
+        'nci',
         'type_identification',
         'date_naissance',
         'sexe',
@@ -55,6 +56,8 @@ class Client extends Model
         'statut',
         'notes',
         'user_id',
+        'password',
+        'code_verification',
     ];
 
     /**
@@ -62,6 +65,8 @@ class Client extends Model
      */
     protected $hidden = [
         'numero_identification', // Sensible
+        'password',
+        'code_verification',
     ];
 
     /**
@@ -73,6 +78,7 @@ class Client extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     /**

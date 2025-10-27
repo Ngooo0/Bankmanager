@@ -195,69 +195,159 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/comptes",
+     *     path="/api/v1/comptes",
      *     tags={"Comptes"},
      *     summary="Créer un nouveau compte",
-     *     description="Crée un nouveau compte bancaire pour un client existant",
+     *     description="Crée un nouveau compte bancaire avec création automatique du client si nécessaire. Génère un mot de passe et un code de vérification, envoie un email et un SMS.",
      *     security={{"passport": {"write-comptes"}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"client_id", "type"},
-     *             @OA\Property(property="client_id", type="string", format="uuid", description="UUID du client"),
+     *             required={"type", "soldeInitial", "devise", "client"},
      *             @OA\Property(property="type", type="string", enum={"epargne", "cheque"}, description="Type de compte"),
-     *             @OA\Property(property="solde_initial", type="number", format="decimal", description="Solde initial", default=0),
-     *             @OA\Property(property="devise", type="string", maxLength=3, description="Devise", default="XOF")
+     *             @OA\Property(property="soldeInitial", type="number", format="decimal", minimum=10000, description="Solde initial (minimum 10 000)"),
+     *             @OA\Property(property="devise", type="string", maxLength=3, description="Devise (ex: FCFA, USD)"),
+     *             @OA\Property(property="client", type="object", description="Informations du client",
+     *                 @OA\Property(property="id", type="string", format="uuid", description="ID du client existant (optionnel)"),
+     *                 @OA\Property(property="titulaire", type="string", minLength=2, maxLength=255, description="Nom complet du titulaire"),
+     *                 @OA\Property(property="nci", type="string", description="Numéro NCI sénégalais (13 chiffres + lettre)"),
+     *                 @OA\Property(property="email", type="string", format="email", description="Email unique"),
+     *                 @OA\Property(property="telephone", type="string", description="Téléphone sénégalais (+221XXXXXXXXX)"),
+     *                 @OA\Property(property="adresse", type="string", minLength=5, maxLength=500, description="Adresse")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Compte créé avec succès",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="660f9511-f30c-52e5-b827-557766551111"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123460"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", example="cheque"),
+     *                 @OA\Property(property="solde", type="number", format="decimal", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="actif"),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer")
+     *                 )
+     *             )
+     *         )
      *     ),
-     *     @OA\Response(response=400, description="Données invalides"),
-     *     @OA\Response(response=404, description="Client non trouvé"),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Données invalides",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(property="details", type="object",
+     *                     @OA\Property(property="soldeInitial", type="array", @OA\Items(type="string", example="Le solde initial doit être d'au moins 10 000 FCFA."))
+     *                 )
+     *             )
+     *         )
+     *     ),
      *     @OA\Response(response=401, description="Non authentifié"),
      *     @OA\Response(response=403, description="Accès refusé")
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCompteRequest $request): JsonResponse
     {
-        $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'type' => 'required|in:epargne,cheque',
-            'solde_initial' => 'numeric|min:0|max:999999999999.99',
-            'devise' => 'string|max:3'
-        ]);
+        $validated = $request->validated();
 
-        $client = Client::findOrFail($request->client_id);
+        DB::transaction(function () use ($validated, &$compte, &$client) {
+            // Vérifier si le client existe ou le créer
+            if (isset($validated['client']['id'])) {
+                // Client existant
+                $client = Client::findOrFail($validated['client']['id']);
+            } else {
+                // Créer un nouveau client
+                $generatedPassword = $this->generateSecurePassword();
+                $generatedCode = $this->generateVerificationCode();
 
-        DB::transaction(function () use ($request, $client, &$compte) {
+                // Parser le nom complet
+                $nameParts = explode(' ', $validated['client']['titulaire'], 2);
+                $prenom = $nameParts[0] ?? '';
+                $nom = $nameParts[1] ?? $prenom; // Si pas d'espace, utiliser le prénom comme nom
+
+                $client = Client::create([
+                    'prenom' => $prenom,
+                    'nom' => $nom,
+                    'email' => $validated['client']['email'],
+                    'telephone' => $validated['client']['telephone'],
+                    'adresse' => $validated['client']['adresse'],
+                    'nci' => $validated['client']['nci'],
+                    'pays' => 'Sénégal',
+                    'statut' => 'Actif',
+                    'password' => $generatedPassword,
+                    'code_verification' => $generatedCode,
+                ]);
+            }
+
+            // Créer le compte
             $compte = Compte::create([
                 'client_id' => $client->id,
                 'titulaire' => $client->nom_complet,
-                'type' => $request->type,
-                'solde' => $request->solde_initial ?? 0,
-                'devise' => $request->devise ?? 'XOF',
+                'type' => $validated['type'],
+                'solde' => $validated['soldeInitial'],
+                'devise' => $validated['devise'],
                 'date_creation' => now(),
                 'statut' => 'actif',
             ]);
 
-            // Créer une transaction d'ouverture si solde initial > 0
-            if ($compte->solde > 0) {
-                $compte->transactions()->create([
-                    'type' => 'depot',
-                    'montant' => $compte->solde,
-                    'devise' => $compte->devise,
-                    'description' => 'Ouverture du compte avec solde initial',
-                    'date_transaction' => now(),
-                    'statut' => 'validee',
-                    'solde_apres' => $compte->solde,
-                ]);
+            // Créer une transaction d'ouverture
+            $compte->transactions()->create([
+                'type' => 'depot',
+                'montant' => $compte->solde,
+                'devise' => $compte->devise,
+                'description' => 'Ouverture du compte avec solde initial',
+                'date_transaction' => now(),
+                'statut' => 'validee',
+                'solde_apres' => $compte->solde,
+            ]);
+
+            // Déclencher l'événement de création du client (uniquement pour les nouveaux clients)
+            if (!isset($validated['client']['id'])) {
+                \App\Events\ClientCreated::dispatch($client, $generatedPassword, $generatedCode);
             }
         });
 
-        return response()->json($compte->load('client'), 201);
+        // Formater la réponse selon la spécification
+        $data = [
+            'id' => $compte->id,
+            'numeroCompte' => $compte->numero_compte,
+            'titulaire' => $compte->titulaire,
+            'type' => $compte->type,
+            'solde' => $compte->solde,
+            'devise' => $compte->devise,
+            'dateCreation' => $compte->date_creation?->toISOString(),
+            'statut' => $compte->statut,
+            'metadata' => $compte->metadata,
+        ];
+
+        return $this->successResponse($data, 'Compte créé avec succès', 201);
+    }
+
+    /**
+     * Génère un mot de passe sécurisé
+     */
+    protected function generateSecurePassword(): string
+    {
+        return \Illuminate\Support\Str::random(12) . rand(100, 999);
+    }
+
+    /**
+     * Génère un code de vérification à 6 chiffres
+     */
+    protected function generateVerificationCode(): string
+    {
+        return str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
     /**
