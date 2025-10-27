@@ -29,12 +29,12 @@ php artisan migrate --force --no-interaction
 
 # Générer la documentation Swagger
 echo "📚 Génération de la documentation Swagger..."
-php artisan l5-swagger:generate --no-interaction
+php artisan l5-swagger:generate --no-interaction || echo "Swagger generation failed, continuing..."
 
 # Optimisations pour la production
 echo "⚡ Optimisations pour la production..."
 php artisan config:cache
-php artisan route:cache
+php artisan route:cache || echo "Route caching failed, continuing..."
 php artisan view:cache
 
 echo "✅ Application prête !"

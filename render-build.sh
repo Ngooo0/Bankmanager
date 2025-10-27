@@ -15,20 +15,31 @@ if [ -z "${APP_KEY:-}" ] || [[ "${APP_KEY:-}" == base64:* && "${APP_KEY:-}" == "
   php artisan key:generate --force --no-interaction
 fi
 
-# Clear and cache config so generation uses the correct APP_URL
+# Clear all caches first
+echo "🧹 Clearing all caches"
 php artisan config:clear
-php artisan config:cache || true
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
 
 # Ensure storage directories exist and are writable
 mkdir -p storage/api-docs
 chmod -R 775 storage bootstrap/cache || true
 
+# Cache config with correct APP_URL
+echo "⚙️ Caching configuration"
+php artisan config:cache || true
+
+# Force route cache regeneration
+echo "🛣️ Caching routes"
+php artisan route:cache || echo "Route caching failed, continuing..."
+
+# Cache views
+echo "👁️ Caching views"
+php artisan view:cache || true
+
 # Generate Swagger docs
 echo "📚 Generating Swagger docs"
-php artisan l5-swagger:generate --no-interaction
-
-# Optional: cache routes and views
-php artisan view:cache || true
-php artisan route:cache || true
+php artisan l5-swagger:generate --no-interaction || echo "Swagger generation failed, continuing..."
 
 echo "✅ Render build script finished"
