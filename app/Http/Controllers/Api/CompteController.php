@@ -809,5 +809,4 @@ class CompteController extends Controller
             );
         }
     }
-
 }
