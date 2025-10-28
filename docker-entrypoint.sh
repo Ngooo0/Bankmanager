@@ -18,6 +18,19 @@ fi
 
 echo "✅ Laravel artisan found"
 
+# Nettoyer les caches avant de les régénérer
+echo "🧹 Clearing caches..."
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
+# Régénérer les caches
+echo "🔄 Regenerating caches..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
 # Tester la connectivité de base de données (optionnel)
 echo "🔍 Testing database connectivity..."
 if php artisan migrate:status > /dev/null 2>&1; then
