@@ -1025,6 +1025,4 @@ class CompteController extends Controller
             return $dateBlocage->copy()->addDays($duree);
         }
     }
-
-}
 }
